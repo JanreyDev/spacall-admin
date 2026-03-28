@@ -1,0 +1,25 @@
+stages:
+  - deploy
+
+deploy_prod:
+  stage: deploy
+  only:
+    - main
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -H 152.42.238.242 >> ~/.ssh/known_hosts
+  script:
+    - echo "Deploying spacall.ph to droplet..."
+    - ssh root@152.42.238.242 "
+        cd /var/www/app/spacall.ph &&
+        git reset --hard &&
+        git pull origin main &&
+        npm install --production &&
+        npm run build &&
+        pm2 restart spacall
+      "
