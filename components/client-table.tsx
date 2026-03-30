@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { mockClients, type Client } from "@/lib/mock-data"
+import type { Client } from "@/lib/mock-data"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,9 +16,12 @@ import {
 import { Search, MoreHorizontal, Mail, Phone, Calendar, DollarSign, Eye, Ban, Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export function ClientTable() {
+interface ClientTableProps {
+  clients: Client[]
+}
+
+export function ClientTable({ clients }: ClientTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [clients] = useState<Client[]>(mockClients)
 
   const filteredClients = clients.filter(
     (client) =>

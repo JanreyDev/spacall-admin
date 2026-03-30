@@ -4,16 +4,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Star, CheckCircle, Ban, MoreHorizontal } from "lucide-react"
+import { Star, CheckCircle, Ban, MoreHorizontal, XCircle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Therapist } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
-interface TherapistTableProps {
-  therapists: Therapist[]
+type TherapistRow = Therapist & {
+  providerId?: number
+  vipStatus?: string
 }
 
-export function TherapistTable({ therapists }: TherapistTableProps) {
+interface TherapistTableProps {
+  therapists: TherapistRow[]
+  onApproveVip?: (providerId: number) => void
+  onRejectVip?: (providerId: number) => void
+  vipActionLoading?: Record<number, boolean>
+}
+
+export function TherapistTable({
+  therapists,
+  onApproveVip,
+  onRejectVip,
+  vipActionLoading = {},
+}: TherapistTableProps) {
   const isTopRated = (rating: number) => rating >= 4.9
 
   return (
@@ -23,6 +36,7 @@ export function TherapistTable({ therapists }: TherapistTableProps) {
           <TableRow className="bg-secondary/50 hover:bg-secondary/50">
             <TableHead className="font-semibold">Therapist</TableHead>
             <TableHead className="font-semibold">Status</TableHead>
+            <TableHead className="font-semibold">VIP</TableHead>
             <TableHead className="font-semibold">Rating</TableHead>
             <TableHead className="font-semibold">Bookings</TableHead>
             <TableHead className="font-semibold text-right">Revenue</TableHead>
@@ -70,6 +84,20 @@ export function TherapistTable({ therapists }: TherapistTableProps) {
                 </Badge>
               </TableCell>
               <TableCell>
+                <Badge
+                  className={cn(
+                    "font-medium",
+                    (therapist.vipStatus ?? "").toLowerCase() === "approved"
+                      ? "bg-emerald-600 text-white"
+                      : (therapist.vipStatus ?? "").toLowerCase() === "pending"
+                        ? "bg-sidebar-primary/10 text-sidebar-primary border border-sidebar-primary"
+                        : "bg-secondary text-secondary-foreground",
+                  )}
+                >
+                  {(therapist.vipStatus ?? "none").toUpperCase()}
+                </Badge>
+              </TableCell>
+              <TableCell>
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-sidebar-primary text-sidebar-primary" />
                   <span className={cn("font-semibold", isTopRated(therapist.rating) && "text-sidebar-primary")}>
@@ -81,6 +109,28 @@ export function TherapistTable({ therapists }: TherapistTableProps) {
               <TableCell className="text-right font-semibold">${therapist.revenue.toLocaleString()}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
+                  {therapist.vipStatus?.toLowerCase() === "pending" && therapist.providerId && (
+                    <>
+                    <Button
+                      size="sm"
+                      className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                      disabled={vipActionLoading[therapist.providerId]}
+                      onClick={() => onApproveVip?.(therapist.providerId!)}
+                    >
+                      <CheckCircle className="mr-1 h-4 w-4" />
+                      {vipActionLoading[therapist.providerId] ? "..." : "Approve VIP"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={vipActionLoading[therapist.providerId]}
+                      onClick={() => onRejectVip?.(therapist.providerId!)}
+                    >
+                      <XCircle className="mr-1 h-4 w-4" />
+                      Reject
+                    </Button>
+                    </>
+                  )}
                   {therapist.verificationStatus === "Pending" && (
                     <Button size="sm" className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
                       <CheckCircle className="mr-1 h-4 w-4" />

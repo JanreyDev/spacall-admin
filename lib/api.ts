@@ -38,6 +38,39 @@ export interface ServiceItem {
   category?: ServiceCategory | null;
 }
 
+export interface AdminTherapistUser {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  photo_url?: string | null;
+}
+
+export interface AdminTherapist {
+  id: number;
+  verification_status?: string | null;
+  average_rating?: string | number | null;
+  total_bookings?: number | null;
+  total_earnings?: string | number | null;
+  user?: AdminTherapistUser | null;
+  therapist_profile?: {
+    vip_status?: string | null;
+    vip_applied_at?: string | null;
+  } | null;
+}
+
+export interface AdminClient {
+  id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  mobile_number?: string | null;
+  profile_photo_url?: string | null;
+  total_bookings?: number | null;
+  total_spent?: string | number | null;
+  customer_tier?: string | null;
+  created_at?: string | null;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -114,6 +147,25 @@ export async function fetchServiceCategories(token: string) {
   );
 }
 
+export interface ServiceCategoryCreatePayload {
+  name: string;
+  description?: string;
+  sort_order?: number;
+  icon_url?: string;
+  is_active?: boolean;
+}
+
+export async function createServiceCategory(
+  token: string,
+  payload: ServiceCategoryCreatePayload,
+) {
+  return apiRequest<{ message: string; category: ServiceCategory }>(
+    "/admin/services/categories",
+    { method: "POST", body: payload },
+    token,
+  );
+}
+
 export async function fetchServices(token: string, params?: {
   search?: string;
   category_id?: number | null;
@@ -173,4 +225,87 @@ export async function deleteService(token: string, id: number) {
     { method: "DELETE" },
     token,
   );
+}
+
+export async function fetchAdminTherapists(
+  token: string,
+  params?: { search?: string; verification_status?: string },
+) {
+  const query = new URLSearchParams();
+  if (params?.search) {
+    query.set("search", params.search);
+  }
+  if (params?.verification_status && params.verification_status !== "all") {
+    query.set("verification_status", params.verification_status);
+  }
+
+  const queryString = query.toString();
+  return apiRequest<{ therapists: { data: AdminTherapist[] } }>(
+    `/admin/therapists${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function approveTherapistVip(token: string, therapistId: number) {
+  return apiRequest<{ message: string }>(
+    `/admin/therapists/${therapistId}/approve-vip`,
+    { method: "POST" },
+    token,
+  );
+}
+
+export async function rejectTherapistVip(token: string, therapistId: number) {
+  return apiRequest<{ message: string }>(
+    `/admin/therapists/${therapistId}/reject-vip`,
+    { method: "POST" },
+    token,
+  );
+}
+
+export async function fetchAdminClients(
+  token: string,
+  params?: { search?: string; page?: number },
+) {
+  const query = new URLSearchParams();
+  if (params?.search) {
+    query.set("search", params.search);
+  }
+  if (params?.page) {
+    query.set("page", String(params.page));
+  }
+
+  const queryString = query.toString();
+  return apiRequest<{
+    clients: {
+      data: AdminClient[];
+      total: number;
+      current_page: number;
+      last_page: number;
+    };
+  }>(
+    `/admin/clients${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function uploadServiceImage(token: string, file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(`${API_BASE_URL}/admin/services/upload-image`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return (await response.json()) as { url: string; message: string };
 }

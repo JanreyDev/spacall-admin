@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,10 +20,12 @@ import {
   ADMIN_TOKEN_STORAGE_KEY,
   ServiceCategory,
   ServiceItem,
+  createServiceCategory,
   createService,
   deleteService,
   fetchServiceCategories,
   fetchServices,
+  uploadServiceImage,
   updateService,
 } from "@/lib/api";
 
@@ -71,6 +73,10 @@ export default function ServicesPage() {
   const [editingServiceId, setEditingServiceId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const activeServices = useMemo(
     () => services.filter((service) => service.is_active).length,
@@ -102,6 +108,41 @@ export default function ServicesPage() {
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to fetch categories.");
+    }
+  }
+
+  async function handleCreateCategory() {
+    if (!token) {
+      setErrorMessage("Missing admin token. Please sign in again.");
+      return;
+    }
+
+    const name = newCategoryName.trim();
+    if (!name) {
+      setErrorMessage("Category name is required.");
+      return;
+    }
+
+    try {
+      setCreatingCategory(true);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      const response = await createServiceCategory(token, {
+        name,
+        description: newCategoryDescription.trim() || undefined,
+      });
+      await loadCategories(token);
+      setForm((prev) => ({
+        ...prev,
+        category_id: String(response.category.id),
+      }));
+      setNewCategoryName("");
+      setNewCategoryDescription("");
+      setSuccessMessage(`Category "${response.category.name}" created.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to create category.");
+    } finally {
+      setCreatingCategory(false);
     }
   }
 
@@ -216,6 +257,29 @@ export default function ServicesPage() {
     }
   }
 
+  async function handleImageFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!token) {
+      setErrorMessage("Missing admin token. Please sign in again.");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      const response = await uploadServiceImage(token, file);
+      setForm((prev) => ({ ...prev, image_url: response.url }));
+      setSuccessMessage("Image uploaded successfully.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to upload image.");
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
+  }
+
   if (!token) {
     return (
       <div className="space-y-6">
@@ -263,6 +327,25 @@ export default function ServicesPage() {
         <CardContent className="space-y-4">
           {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
           {successMessage ? <p className="text-sm text-emerald-600">{successMessage}</p> : null}
+
+          <div className="rounded-md border p-4">
+            <p className="text-sm font-medium">Add Category</p>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <Input
+                value={newCategoryName}
+                onChange={(event) => setNewCategoryName(event.target.value)}
+                placeholder="Category name (e.g. Massage Services)"
+              />
+              <Input
+                value={newCategoryDescription}
+                onChange={(event) => setNewCategoryDescription(event.target.value)}
+                placeholder="Description (optional)"
+              />
+              <Button onClick={handleCreateCategory} disabled={creatingCategory}>
+                {creatingCategory ? "Adding..." : "Add Category"}
+              </Button>
+            </div>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -312,14 +395,21 @@ export default function ServicesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Image URL</Label>
+              <Label>Service Image</Label>
               <Input
-                value={form.image_url}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, image_url: event.target.value }))
-                }
-                placeholder="https://..."
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                onChange={handleImageFileChange}
+                disabled={uploadingImage}
               />
+              <p className="text-xs text-muted-foreground">
+                {uploadingImage ? "Uploading image..." : "PNG, JPG, GIF, WEBP up to 2MB."}
+              </p>
+              {form.image_url ? (
+                <p className="text-xs text-muted-foreground break-all">
+                  Uploaded URL: {form.image_url}
+                </p>
+              ) : null}
             </div>
           </div>
 
