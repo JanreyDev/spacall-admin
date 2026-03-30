@@ -16,12 +16,22 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
 import { ModeToggle } from "@/components/theme/mode-toggle"
+import { ADMIN_TOKEN_STORAGE_KEY, ADMIN_USER_STORAGE_KEY } from "@/lib/api"
+import { useRouter } from "next/navigation"
 
 interface HeaderProps {
   onMenuClick?: () => void
 }
 
 export function Header({onMenuClick }: HeaderProps) {
+  const router = useRouter()
+
+  const handleLogout = () => {
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY)
+    localStorage.removeItem(ADMIN_USER_STORAGE_KEY)
+    router.push("/login")
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background px-6">
       <div className="flex items-center gap-4">
@@ -94,7 +104,7 @@ export function Header({onMenuClick }: HeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer">
+            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
             </DropdownMenuItem>

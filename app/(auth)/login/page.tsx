@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  ADMIN_TOKEN_STORAGE_KEY,
+  ADMIN_USER_STORAGE_KEY,
+  adminLogin,
+} from "@/lib/api";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -33,6 +39,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -44,9 +51,17 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
-    // Placeholder auth flow; replace with real API call when available.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    router.push("/admin/dashboard");
+    try {
+      setErrorMessage(null);
+      const result = await adminLogin(values.email, values.password);
+      localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, result.token);
+      localStorage.setItem(ADMIN_USER_STORAGE_KEY, JSON.stringify(result.user));
+      router.push("/admin/dashboard");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to sign in.",
+      );
+    }
   };
 
   return (
@@ -105,6 +120,9 @@ export default function LoginPage() {
             >
               {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
+            {errorMessage ? (
+              <p className="text-sm text-destructive">{errorMessage}</p>
+            ) : null}
           </form>
         </Form>
       </CardContent>
