@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, LayoutDashboard, MessagesSquare, Settings, Star, UserCircle, Users, Briefcase } from "lucide-react"
+import { BarChart3, Calendar, LayoutDashboard, MessagesSquare, Settings, Star, UserCircle, Users, Briefcase, Layers } from "lucide-react"
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -9,6 +9,7 @@ const navItems = [
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/messages", label: "Messages", icon: MessagesSquare },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { href: "/admin/tiers", label: "Tiers", icon: Layers },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
 

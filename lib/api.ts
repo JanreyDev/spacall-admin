@@ -448,6 +448,35 @@ export interface AdminReportClientMetrics {
   avg_spend_per_client: number;
 }
 
+export interface AdminTier {
+  id: number;
+  name: string;
+  level: number;
+  online_minutes_required: number;
+  extensions_required: number;
+  bookings_required: number;
+}
+
+export interface AdminTierMember {
+  id: number;
+  verification_status?: string | null;
+  average_rating?: number | string | null;
+  total_bookings?: number | null;
+  total_earnings?: number | string | null;
+  user?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    profile_photo_url?: string | null;
+  } | null;
+  therapist_stat?: {
+    total_online_minutes?: number | null;
+    total_extensions?: number | null;
+    total_bookings?: number | null;
+    last_online_at?: string | null;
+  } | null;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -822,6 +851,42 @@ export async function fetchAdminReports(token: string) {
     client_metrics?: AdminReportClientMetrics;
   }>(
     "/admin/reports",
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminTiers(token: string) {
+  return apiRequest<{ tiers: AdminTier[] }>(
+    "/admin/tiers",
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function updateAdminTier(
+  token: string,
+  tierId: number,
+  payload: {
+    name?: string;
+    online_minutes_required: number;
+    extensions_required: number;
+    bookings_required: number;
+  },
+) {
+  return apiRequest<{ message: string; tier: AdminTier }>(
+    `/admin/tiers/${tierId}`,
+    { method: "PATCH", body: payload },
+    token,
+  );
+}
+
+export async function fetchAdminTierMembers(token: string, tierId: number) {
+  return apiRequest<{
+    tier: AdminTier;
+    members: AdminTierMember[];
+  }>(
+    `/admin/tiers/${tierId}/members`,
     { method: "GET" },
     token,
   );
