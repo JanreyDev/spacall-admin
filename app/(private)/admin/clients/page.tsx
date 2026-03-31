@@ -7,6 +7,10 @@ import { Users, DollarSign, Calendar, Star } from "lucide-react"
 import type { Client } from "@/lib/mock-data"
 import { ADMIN_TOKEN_STORAGE_KEY, fetchAdminClients } from "@/lib/api"
 
+type ClientRow = Client & {
+  userId: number
+}
+
 function getClientTierLabel(totalSpent: number) {
   if (totalSpent >= 5000) return "VIP"
   if (totalSpent >= 2000) return "Regular"
@@ -15,7 +19,7 @@ function getClientTierLabel(totalSpent: number) {
 
 export default function ClientsPage() {
   const [token, setToken] = useState("")
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<ClientRow[]>([])
   const [totalClientsCount, setTotalClientsCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -38,11 +42,12 @@ export default function ClientsPage() {
       const response = await fetchAdminClients(authToken)
       const rows = response.clients?.data ?? []
 
-      const mapped: Client[] = rows.map((item) => {
+      const mapped: ClientRow[] = rows.map((item) => {
         const name = [item.first_name, item.last_name].filter(Boolean).join(" ").trim() || "Unknown Client"
         const spent = Number(item.total_spent ?? 0)
         const bookingCount = Number(item.total_bookings ?? 0)
         return {
+          userId: item.id,
           id: `CL${String(item.id).padStart(3, "0")}`,
           name,
           email: item.email ?? "-",

@@ -15,9 +15,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Search, MoreHorizontal, Mail, Phone, Calendar, DollarSign, Eye, Ban, Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Link from "next/link"
+
+type ClientRow = Client & {
+  userId?: number
+}
 
 interface ClientTableProps {
-  clients: Client[]
+  clients: ClientRow[]
 }
 
 export function ClientTable({ clients }: ClientTableProps) {
@@ -134,10 +139,19 @@ export function ClientTable({ clients }: ClientTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem className="gap-2 cursor-pointer">
-                          <Eye className="h-4 w-4" />
-                          View Profile
-                        </DropdownMenuItem>
+                        {client.userId ? (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/clients/${client.userId}`} className="gap-2 cursor-pointer flex items-center">
+                              <Eye className="h-4 w-4" />
+                              View Profile
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
+                            <Eye className="h-4 w-4" />
+                            View Profile
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem className="gap-2 cursor-pointer">
                           <Calendar className="h-4 w-4" />
                           Booking History

@@ -170,6 +170,55 @@ export interface AdminClient {
   created_at?: string | null;
 }
 
+export interface AdminClientDetail {
+  id: number;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  nickname?: string | null;
+  email?: string | null;
+  mobile_number?: string | null;
+  profile_photo_url?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  status?: string | null;
+  role?: string | null;
+  customer_tier?: string | null;
+  total_bookings?: number | null;
+  total_spent?: string | number | null;
+  wallet_balance?: string | number | null;
+  created_at?: string | null;
+  bookings?: Array<{
+    id: number;
+    booking_number?: string | null;
+    status?: string | null;
+    total_amount?: string | number | null;
+    scheduled_at?: string | null;
+    completed_at?: string | null;
+    payment_status?: string | null;
+    service?: {
+      id: number;
+      name?: string | null;
+      duration_minutes?: number | null;
+    } | null;
+    provider?: {
+      id: number;
+      user?: {
+        first_name?: string | null;
+        last_name?: string | null;
+        email?: string | null;
+        profile_photo_url?: string | null;
+      } | null;
+    } | null;
+    location?: {
+      booking_id?: number;
+      address?: string | null;
+      latitude?: string | number | null;
+      longitude?: string | number | null;
+    } | null;
+  }> | null;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -395,6 +444,14 @@ export async function fetchAdminClients(
     };
   }>(
     `/admin/clients${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminClientDetails(token: string, clientId: number) {
+  return apiRequest<{ client: AdminClientDetail }>(
+    `/admin/clients/${clientId}`,
     { method: "GET" },
     token,
   );
