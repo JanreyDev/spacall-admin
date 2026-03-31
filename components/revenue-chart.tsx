@@ -3,10 +3,21 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { mockRevenueData } from "@/lib/mock-data"
 
-export function RevenueChart() {
+interface RevenueChartPoint {
+  month: string
+  revenue: number
+}
+
+interface RevenueChartProps {
+  data?: RevenueChartPoint[]
+}
+
+export function RevenueChart({ data }: RevenueChartProps) {
+  const chartData = data?.length ? data : mockRevenueData
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={mockRevenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} className="font-sans">
+      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} className="font-sans">
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />

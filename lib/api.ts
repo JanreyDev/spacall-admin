@@ -219,6 +219,53 @@ export interface AdminClientDetail {
   }> | null;
 }
 
+export interface AdminDashboardStats {
+  active_bookings?: number;
+  bookings_today?: number;
+  online_therapists?: number;
+  total_revenue?: string | number;
+  pending_payouts_amount?: string | number;
+  pending_payouts_count?: number;
+}
+
+export interface AdminDashboardRevenuePoint {
+  month?: string | null;
+  revenue?: string | number | null;
+}
+
+export interface AdminDashboardRecentAlert {
+  id: string;
+  type?: string | null;
+  title?: string | null;
+  message?: string | null;
+  time?: string | null;
+  original_time?: string | null;
+}
+
+export interface AdminDashboardRecentBooking {
+  id: number;
+  booking_number?: string | null;
+  status?: string | null;
+  payment_status?: string | null;
+  total_amount?: string | number | null;
+  scheduled_at?: string | null;
+  service?: {
+    name?: string | null;
+  } | null;
+  customer?: {
+    id: number;
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
+  therapist?: {
+    id: number;
+    nickname?: string | null;
+  } | null;
+  location?: {
+    address?: string | null;
+  } | null;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -452,6 +499,19 @@ export async function fetchAdminClients(
 export async function fetchAdminClientDetails(token: string, clientId: number) {
   return apiRequest<{ client: AdminClientDetail }>(
     `/admin/clients/${clientId}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminDashboardStats(token: string) {
+  return apiRequest<{
+    stats?: AdminDashboardStats;
+    recent_bookings?: AdminDashboardRecentBooking[];
+    revenue_chart?: AdminDashboardRevenuePoint[];
+    recent_alerts?: AdminDashboardRecentAlert[];
+  }>(
+    "/admin/dashboard-stats",
     { method: "GET" },
     token,
   );
