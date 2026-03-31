@@ -3,7 +3,7 @@
 import { Star, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { mockTherapistRatings, type TherapistRatingStats } from "@/lib/mock-data"
+import { type TherapistRatingStats } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
 function TrendIndicator({ trend }: { trend: TherapistRatingStats["recentTrend"] }) {
@@ -56,10 +56,14 @@ function RatingBreakdown({ stats }: { stats: TherapistRatingStats }) {
   )
 }
 
-export function TherapistRatings() {
+interface TherapistRatingsProps {
+  ratings: TherapistRatingStats[]
+}
+
+export function TherapistRatings({ ratings }: TherapistRatingsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      {mockTherapistRatings.map((stats) => (
+      {ratings.map((stats) => (
         <div
           key={stats.therapistId}
           className={cn("rounded-lg border bg-card p-4", stats.averageRating >= 4.9 && "border-sidebar-primary/50")}

@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { mockReviews, type Review } from "@/lib/mock-data"
+import type { Review } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
 function StarRating({ rating }: { rating: number }) {
@@ -45,7 +45,12 @@ function getStatusBadge(status: Review["status"]) {
   }
 }
 
-export function ReviewTable() {
+interface ReviewTableProps {
+  reviews: Review[]
+  loading?: boolean
+}
+
+export function ReviewTable({ reviews, loading = false }: ReviewTableProps) {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [ratingFilter, setRatingFilter] = useState<string>("all")
@@ -53,7 +58,7 @@ export function ReviewTable() {
   const [responseDialogOpen, setResponseDialogOpen] = useState(false)
   const [adminResponse, setAdminResponse] = useState("")
 
-  const filteredReviews = mockReviews.filter((review) => {
+  const filteredReviews = reviews.filter((review) => {
     const matchesSearch =
       review.clientName.toLowerCase().includes(search.toLowerCase()) ||
       review.therapistName.toLowerCase().includes(search.toLowerCase()) ||
@@ -110,6 +115,11 @@ export function ReviewTable() {
       </div>
 
       <div className="rounded-lg border bg-card">
+        {loading ? (
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">Loading reviews...</p>
+          </div>
+        ) : null}
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">

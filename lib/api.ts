@@ -304,6 +304,50 @@ export interface AdminBookingStats {
   requested?: number;
 }
 
+export interface AdminReviewItem {
+  id: number | string;
+  booking_id?: number | string | null;
+  rating?: number | null;
+  comment?: string | null;
+  created_at?: string | null;
+  status?: "Published" | "Flagged" | "Hidden" | string;
+  service_name?: string | null;
+  client?: {
+    id?: number | string | null;
+    name?: string | null;
+    avatar?: string | null;
+  } | null;
+  therapist?: {
+    id?: number | string | null;
+    name?: string | null;
+    avatar?: string | null;
+  } | null;
+}
+
+export interface AdminReviewStats {
+  total_reviews?: number;
+  avg_rating?: number;
+  flagged_reviews?: number;
+  top_rated_therapist?: {
+    name?: string | null;
+    rating?: number | string | null;
+  } | null;
+}
+
+export interface AdminTherapistRatingItem {
+  therapist_id?: string | null;
+  therapist_name?: string | null;
+  therapist_avatar?: string | null;
+  average_rating?: number | null;
+  total_reviews?: number | null;
+  five_stars?: number | null;
+  four_stars?: number | null;
+  three_stars?: number | null;
+  two_stars?: number | null;
+  one_stars?: number | null;
+  recent_trend?: "up" | "down" | "stable" | string | null;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -589,6 +633,42 @@ export async function fetchAdminBookings(
     };
   }>(
     `/admin/bookings${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminReviews(
+  token: string,
+  params?: {
+    search?: string;
+    rating?: string;
+    page?: number;
+  },
+) {
+  const query = new URLSearchParams();
+  if (params?.search) {
+    query.set("search", params.search);
+  }
+  if (params?.rating && params.rating !== "all") {
+    query.set("rating", params.rating);
+  }
+  if (params?.page) {
+    query.set("page", String(params.page));
+  }
+
+  const queryString = query.toString();
+  return apiRequest<{
+    reviews: AdminReviewItem[];
+    therapist_ratings?: AdminTherapistRatingItem[];
+    stats?: AdminReviewStats;
+    meta?: {
+      current_page?: number;
+      last_page?: number;
+      total?: number;
+    };
+  }>(
+    `/admin/reviews${queryString ? `?${queryString}` : ""}`,
     { method: "GET" },
     token,
   );
