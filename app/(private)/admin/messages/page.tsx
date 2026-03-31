@@ -16,6 +16,8 @@ import {
   type AdminSupportSession,
 } from "@/lib/api"
 
+const MESSAGE_REFRESH_INTERVAL_MS = 3000
+
 function mapMessage(item: AdminSupportMessage): Message {
   const role = (item.sender_role ?? "").toLowerCase()
   const senderType: Message["sender"] =
@@ -113,9 +115,16 @@ export default function MessagesPage() {
     setToken(savedToken)
   }, [])
 
-  const loadConversations = useCallback(async (authToken: string, searchValue: string, statusValue: string) => {
+  const loadConversations = useCallback(async (
+    authToken: string,
+    searchValue: string,
+    statusValue: string,
+    options?: { silent?: boolean },
+  ) => {
     try {
-      setLoading(true)
+      if (!options?.silent) {
+        setLoading(true)
+      }
       setErrorMessage(null)
       const apiStatus =
         statusValue === "completed" ? "closed" : statusValue === "active" ? "open" : "all"
@@ -158,7 +167,9 @@ export default function MessagesPage() {
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to fetch conversations.")
     } finally {
-      setLoading(false)
+      if (!options?.silent) {
+        setLoading(false)
+      }
     }
   }, [selectedConversation])
 
@@ -166,6 +177,36 @@ export default function MessagesPage() {
     if (!token) return
     void loadConversations(token, search, statusFilter)
   }, [token, search, statusFilter, loadConversations])
+
+  const refreshSelectedConversation = useCallback(async (authToken: string) => {
+    if (!selectedConversation) return
+
+    try {
+      const sessionId = Number(selectedConversation.id)
+      const selectedSession = sessionMap[String(sessionId)]
+      const messageResponse = await fetchAdminSupportSessionMessages(authToken, sessionId)
+      if (selectedSession) {
+        setSelectedConversation(mapConversationFull(selectedSession, messageResponse.messages ?? []))
+      } else {
+        setSelectedConversation((prev) =>
+          prev ? { ...prev, messages: (messageResponse.messages ?? []).map(mapMessage) } : prev,
+        )
+      }
+    } catch {
+      // Ignore background refresh errors to avoid noisy UI.
+    }
+  }, [selectedConversation, sessionMap])
+
+  useEffect(() => {
+    if (!token) return
+
+    const timer = setInterval(() => {
+      void loadConversations(token, search, statusFilter, { silent: true })
+      void refreshSelectedConversation(token)
+    }, MESSAGE_REFRESH_INTERVAL_MS)
+
+    return () => clearInterval(timer)
+  }, [token, search, statusFilter, loadConversations, refreshSelectedConversation])
 
   async function handleSelectConversation(conversation: Conversation) {
     if (!token) return
