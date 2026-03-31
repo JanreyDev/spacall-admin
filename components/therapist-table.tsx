@@ -8,6 +8,7 @@ import { Star, CheckCircle, Ban, MoreHorizontal, XCircle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Therapist } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 type TherapistRow = Therapist & {
   providerId?: number
@@ -144,7 +145,15 @@ export function TherapistTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Profile</DropdownMenuItem>
+                      {therapist.providerId ? (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/therapists/${therapist.providerId}`} className="cursor-pointer">
+                            View Profile
+                          </Link>
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem disabled>View Profile</DropdownMenuItem>
+                      )}
                       <DropdownMenuItem>View Bookings</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
                         <Ban className="mr-2 h-4 w-4" />

@@ -58,6 +58,105 @@ export interface AdminTherapist {
   } | null;
 }
 
+export interface AdminTherapistDetail {
+  id: number;
+  uuid?: string | null;
+  verification_status?: string | null;
+  type?: string | null;
+  average_rating?: string | number | null;
+  total_bookings?: number | null;
+  total_reviews?: number | null;
+  total_earnings?: string | number | null;
+  is_active?: boolean | null;
+  is_available?: boolean | null;
+  accepts_home_service?: boolean | null;
+  accepts_store_service?: boolean | null;
+  created_at?: string | null;
+  verified_at?: string | null;
+  user?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    mobile_number?: string | null;
+    profile_photo_url?: string | null;
+    customer_tier?: string | null;
+  } | null;
+  therapist_profile?: {
+    bio?: string | null;
+    specializations?: string[] | null;
+    certifications?: string[] | null;
+    languages_spoken?: string[] | null;
+    years_of_experience?: number | null;
+    license_number?: string | null;
+    license_type?: string | null;
+    license_expiry_date?: string | null;
+    base_rate?: string | number | null;
+    service_radius_km?: string | number | null;
+    base_address?: string | null;
+    has_own_equipment?: boolean | null;
+    equipment_list?: string[] | null;
+    gallery_images?: string[] | null;
+    vip_status?: string | null;
+    vip_applied_at?: string | null;
+  } | null;
+  therapist_stat?: {
+    total_online_minutes?: number | null;
+    total_extensions?: number | null;
+    total_bookings?: number | null;
+    last_online_at?: string | null;
+  } | null;
+  current_tier?: {
+    id: number;
+    name?: string | null;
+    level?: number | null;
+  } | null;
+  locations?: Array<{
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    recorded_at?: string | null;
+  }> | null;
+  documents?: Array<{
+    id: number;
+    type?: string | null;
+    file_name?: string | null;
+    file_url?: string | null;
+    uploaded_at?: string | null;
+  }> | null;
+  reviews?: Array<{
+    id: number;
+    rating?: number | null;
+    title?: string | null;
+    body?: string | null;
+    created_at?: string | null;
+    user?: {
+      first_name?: string | null;
+      last_name?: string | null;
+    } | null;
+  }> | null;
+}
+
+export interface AdminTherapistTierProgress {
+  next_tier_name?: string | null;
+  next_tier_level?: number | null;
+  requirements?: {
+    online_minutes?: {
+      required?: number | null;
+      current?: number | null;
+      remaining?: number | null;
+    } | null;
+    extensions?: {
+      required?: number | null;
+      current?: number | null;
+      remaining?: number | null;
+    } | null;
+    bookings?: {
+      required?: number | null;
+      current?: number | null;
+      remaining?: number | null;
+    } | null;
+  } | null;
+}
+
 export interface AdminClient {
   id: number;
   first_name?: string | null;
@@ -251,6 +350,17 @@ export async function approveTherapistVip(token: string, therapistId: number) {
   return apiRequest<{ message: string }>(
     `/admin/therapists/${therapistId}/approve-vip`,
     { method: "POST" },
+    token,
+  );
+}
+
+export async function fetchAdminTherapistDetails(token: string, therapistId: number) {
+  return apiRequest<{
+    therapist: AdminTherapistDetail;
+    tier_progress?: AdminTherapistTierProgress | null;
+  }>(
+    `/admin/therapists/${therapistId}`,
+    { method: "GET" },
     token,
   );
 }
