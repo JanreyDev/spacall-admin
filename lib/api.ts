@@ -348,6 +348,40 @@ export interface AdminTherapistRatingItem {
   recent_trend?: "up" | "down" | "stable" | string | null;
 }
 
+export interface AdminMessageItem {
+  id: string;
+  sender: "Client" | "Therapist";
+  sender_id: string;
+  sender_name: string;
+  sender_avatar?: string | null;
+  content: string;
+  timestamp: string;
+  read: boolean;
+  flagged: boolean;
+}
+
+export interface AdminMessageConversation {
+  id: string;
+  booking_id: string;
+  booking_numeric_id: number;
+  client_id: string;
+  client_name: string;
+  client_avatar?: string | null;
+  therapist_id: string;
+  therapist_name: string;
+  therapist_avatar?: string | null;
+  last_message_at?: string | null;
+  status: "Active" | "Completed" | "Flagged";
+  unread_count: number;
+  last_message?: {
+    id: string;
+    content: string;
+    sender_name: string;
+    created_at?: string | null;
+  } | null;
+  messages?: AdminMessageItem[];
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -669,6 +703,44 @@ export async function fetchAdminReviews(
     };
   }>(
     `/admin/reviews${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminMessageConversations(
+  token: string,
+  params?: { search?: string; status?: string },
+) {
+  const query = new URLSearchParams();
+  if (params?.search) {
+    query.set("search", params.search);
+  }
+  if (params?.status && params.status !== "all") {
+    query.set("status", params.status);
+  }
+
+  const queryString = query.toString();
+  return apiRequest<{
+    conversations: AdminMessageConversation[];
+    stats?: {
+      total?: number;
+      active?: number;
+      flagged?: number;
+    };
+  }>(
+    `/admin/messages${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminMessageConversation(
+  token: string,
+  bookingId: number,
+) {
+  return apiRequest<{ conversation: AdminMessageConversation }>(
+    `/admin/messages/${bookingId}`,
     { method: "GET" },
     token,
   );
