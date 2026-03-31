@@ -1,7 +1,7 @@
 "use client"
 
 import { formatDistanceToNow } from "date-fns"
-import { Flag, AlertTriangle, User, Briefcase } from "lucide-react"
+import { Flag, AlertTriangle, User, Briefcase, Shield } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,11 +25,9 @@ function MessageBubble({ message, isClient }: { message: Message; isClient: bool
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-medium">{message.senderName}</span>
           <Badge variant="outline" className="text-[10px] px-1 py-0">
-            {message.sender === "Client" ? (
-              <User className="h-2.5 w-2.5 mr-0.5" />
-            ) : (
-              <Briefcase className="h-2.5 w-2.5 mr-0.5" />
-            )}
+            {message.sender === "Client" ? <User className="h-2.5 w-2.5 mr-0.5" /> : null}
+            {message.sender === "Therapist" ? <Briefcase className="h-2.5 w-2.5 mr-0.5" /> : null}
+            {message.sender === "Admin" ? <Shield className="h-2.5 w-2.5 mr-0.5" /> : null}
             {message.sender}
           </Badge>
           {message.flagged && <Flag className="h-3 w-3 text-red-500" />}
@@ -85,7 +83,7 @@ export function MessageViewer({ conversation }: MessageViewerProps) {
               <h3 className="font-semibold">
                 {conversation.clientName} & {conversation.therapistName}
               </h3>
-              <p className="text-xs text-muted-foreground">Booking #{conversation.bookingId}</p>
+              <p className="text-xs text-muted-foreground">Conversation #{conversation.bookingId}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

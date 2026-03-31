@@ -382,6 +382,31 @@ export interface AdminMessageConversation {
   messages?: AdminMessageItem[];
 }
 
+export interface AdminSupportSession {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_avatar?: string | null;
+  user_role?: string | null;
+  admin_id?: number | null;
+  admin_name?: string | null;
+  admin_avatar?: string | null;
+  subject?: string | null;
+  status: "open" | "closed" | string;
+  last_message?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AdminSupportMessage {
+  id: number | string;
+  content: string;
+  sender_id: number;
+  sender_name: string;
+  sender_avatar?: string | null;
+  sender_role?: string | null;
+  created_at: string;
+}
+
 export interface AdminReportRevenueTrend {
   date: string;
   revenue: number;
@@ -797,6 +822,31 @@ export async function fetchAdminReports(token: string) {
     client_metrics?: AdminReportClientMetrics;
   }>(
     "/admin/reports",
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminSupportSessions(
+  token: string,
+  status: "all" | "open" | "closed" = "all",
+) {
+  const query = new URLSearchParams();
+  query.set("status", status);
+
+  return apiRequest<{ sessions: AdminSupportSession[] }>(
+    `/support/sessions?${query.toString()}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminSupportSessionMessages(
+  token: string,
+  sessionId: number,
+) {
+  return apiRequest<{ messages: AdminSupportMessage[] }>(
+    `/support/sessions/${sessionId}/messages`,
     { method: "GET" },
     token,
   );

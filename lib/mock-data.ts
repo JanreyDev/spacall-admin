@@ -116,7 +116,7 @@ export interface TherapistRatingStats {
 
 export interface Message {
   id: string
-  sender: "Client" | "Therapist"
+  sender: "Client" | "Therapist" | "Admin"
   senderId: string
   senderName: string
   senderAvatar: string

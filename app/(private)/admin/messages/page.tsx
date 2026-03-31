@@ -10,71 +10,86 @@ import { MessageViewer } from "@/components/message-logs/message-viewer"
 import type { Conversation, Message } from "@/lib/mock-data"
 import {
   ADMIN_TOKEN_STORAGE_KEY,
-  fetchAdminMessageConversation,
-  fetchAdminMessageConversations,
-  type AdminMessageConversation,
-  type AdminMessageItem,
+  fetchAdminSupportSessionMessages,
+  fetchAdminSupportSessions,
+  type AdminSupportMessage,
+  type AdminSupportSession,
 } from "@/lib/api"
 
-function mapMessage(item: AdminMessageItem): Message {
+function mapMessage(item: AdminSupportMessage): Message {
+  const role = (item.sender_role ?? "").toLowerCase()
+  const senderType: Message["sender"] =
+    role === "admin" ? "Admin" : role === "therapist" ? "Therapist" : "Client"
+
   return {
-    id: item.id,
-    sender: item.sender,
-    senderId: item.sender_id,
+    id: String(item.id),
+    sender: senderType,
+    senderId: String(item.sender_id),
     senderName: item.sender_name,
     senderAvatar: item.sender_avatar ?? "",
     content: item.content,
-    timestamp: item.timestamp,
-    read: item.read,
-    flagged: item.flagged,
+    timestamp: item.created_at,
+    read: true,
+    flagged: false,
   }
 }
 
-function mapConversationSummary(item: AdminMessageConversation): Conversation {
+function isFlaggedText(value?: string | null) {
+  const text = (value ?? "").toLowerCase()
+  return ["refund", "complain", "unacceptable", "late", "delay"].some((keyword) => text.includes(keyword))
+}
+
+function mapConversationSummary(item: AdminSupportSession): Conversation {
   const previewMessage: Message | null = item.last_message
     ? {
-        id: item.last_message.id,
+        id: `preview-${item.id}`,
         sender: "Client",
         senderId: "",
-        senderName: item.last_message.sender_name,
+        senderName: item.user_name,
         senderAvatar: "",
-        content: item.last_message.content,
-        timestamp: item.last_message.created_at ?? item.last_message_at ?? new Date().toISOString(),
+        content: item.last_message,
+        timestamp: item.updated_at ?? new Date().toISOString(),
         read: true,
-        flagged: false,
+        flagged: isFlaggedText(item.last_message),
       }
     : null
 
+  const mappedStatus: Conversation["status"] =
+    item.status === "closed" ? "Completed" : isFlaggedText(item.last_message) ? "Flagged" : "Active"
+
   return {
-    id: item.id,
-    bookingId: item.booking_id,
-    clientId: item.client_id,
-    clientName: item.client_name || "Unknown Client",
-    clientAvatar: item.client_avatar ?? "",
-    therapistId: item.therapist_id,
-    therapistName: item.therapist_name || "Unknown Therapist",
-    therapistAvatar: item.therapist_avatar ?? "",
-    lastMessageAt: item.last_message_at ?? new Date().toISOString(),
-    status: item.status,
-    unreadCount: item.unread_count ?? 0,
+    id: String(item.id),
+    bookingId: `SUP-${item.id}`,
+    clientId: String(item.user_id),
+    clientName: item.user_name || "Unknown User",
+    clientAvatar: item.user_avatar ?? "",
+    therapistId: String(item.admin_id ?? "0"),
+    therapistName: item.admin_name || "Admin Support",
+    therapistAvatar: item.admin_avatar ?? "",
+    lastMessageAt: item.updated_at ?? new Date().toISOString(),
+    status: mappedStatus,
+    unreadCount: 0,
     messages: previewMessage ? [previewMessage] : [],
   }
 }
 
-function mapConversationFull(item: AdminMessageConversation): Conversation {
+function mapConversationFull(item: AdminSupportSession, messages: AdminSupportMessage[]): Conversation {
+  const mappedStatus: Conversation["status"] =
+    item.status === "closed" ? "Completed" : messages.some((msg) => isFlaggedText(msg.content)) ? "Flagged" : "Active"
+
   return {
-    id: item.id,
-    bookingId: item.booking_id,
-    clientId: item.client_id,
-    clientName: item.client_name || "Unknown Client",
-    clientAvatar: item.client_avatar ?? "",
-    therapistId: item.therapist_id,
-    therapistName: item.therapist_name || "Unknown Therapist",
-    therapistAvatar: item.therapist_avatar ?? "",
-    lastMessageAt: item.last_message_at ?? new Date().toISOString(),
-    status: item.status,
-    unreadCount: item.unread_count ?? 0,
-    messages: (item.messages ?? []).map(mapMessage),
+    id: String(item.id),
+    bookingId: `SUP-${item.id}`,
+    clientId: String(item.user_id),
+    clientName: item.user_name || "Unknown User",
+    clientAvatar: item.user_avatar ?? "",
+    therapistId: String(item.admin_id ?? "0"),
+    therapistName: item.admin_name || "Admin Support",
+    therapistAvatar: item.admin_avatar ?? "",
+    lastMessageAt: item.updated_at ?? new Date().toISOString(),
+    status: mappedStatus,
+    unreadCount: 0,
+    messages: messages.map(mapMessage),
   }
 }
 
@@ -85,6 +100,7 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [sessionMap, setSessionMap] = useState<Record<string, AdminSupportSession>>({})
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [stats, setStats] = useState({
     total: 0,
@@ -101,21 +117,40 @@ export default function MessagesPage() {
     try {
       setLoading(true)
       setErrorMessage(null)
-      const response = await fetchAdminMessageConversations(authToken, {
-        search: searchValue.trim() || undefined,
-        status: statusValue,
-      })
+      const apiStatus =
+        statusValue === "completed" ? "closed" : statusValue === "active" ? "open" : "all"
+      const response = await fetchAdminSupportSessions(authToken, apiStatus)
+      const sessions = response.sessions ?? []
+      const mapped = sessions.map(mapConversationSummary)
+      setSessionMap(
+        sessions.reduce<Record<string, AdminSupportSession>>((acc, item) => {
+          acc[String(item.id)] = item
+          return acc
+        }, {}),
+      )
+      const searched = searchValue.trim().toLowerCase()
+      const filtered = searched
+        ? mapped.filter((conversation) => {
+            const latest = conversation.messages[conversation.messages.length - 1]
+            return (
+              conversation.clientName.toLowerCase().includes(searched) ||
+              conversation.therapistName.toLowerCase().includes(searched) ||
+              (latest?.content ?? "").toLowerCase().includes(searched)
+            )
+          })
+        : mapped
+      const finalList =
+        statusValue === "flagged" ? filtered.filter((conversation) => conversation.status === "Flagged") : filtered
 
-      const mapped = (response.conversations ?? []).map(mapConversationSummary)
-      setConversations(mapped)
+      setConversations(finalList)
       setStats({
-        total: Number(response.stats?.total ?? mapped.length),
-        active: Number(response.stats?.active ?? mapped.filter((c) => c.status === "Active").length),
-        flagged: Number(response.stats?.flagged ?? mapped.filter((c) => c.status === "Flagged").length),
+        total: finalList.length,
+        active: finalList.filter((c) => c.status === "Active").length,
+        flagged: finalList.filter((c) => c.status === "Flagged").length,
       })
 
       if (selectedConversation) {
-        const exists = mapped.find((item) => item.id === selectedConversation.id)
+        const exists = finalList.find((item) => item.id === selectedConversation.id)
         if (!exists) {
           setSelectedConversation(null)
         }
@@ -136,8 +171,14 @@ export default function MessagesPage() {
     if (!token) return
     try {
       setErrorMessage(null)
-      const response = await fetchAdminMessageConversation(token, Number(conversation.id))
-      setSelectedConversation(mapConversationFull(response.conversation))
+      const sessionId = Number(conversation.id)
+      const selectedSession = sessionMap[String(sessionId)]
+      const messageResponse = await fetchAdminSupportSessionMessages(token, sessionId)
+      if (selectedSession) {
+        setSelectedConversation(mapConversationFull(selectedSession, messageResponse.messages ?? []))
+      } else {
+        setSelectedConversation(conversation)
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to fetch conversation details.")
       setSelectedConversation(conversation)
