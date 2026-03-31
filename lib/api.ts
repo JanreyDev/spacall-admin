@@ -266,6 +266,44 @@ export interface AdminDashboardRecentBooking {
   } | null;
 }
 
+export interface AdminBookingItem {
+  id: number;
+  booking_number?: string | null;
+  status?: string | null;
+  total_amount?: string | number | null;
+  scheduled_at?: string | null;
+  service?: {
+    id: number;
+    name?: string | null;
+    base_price?: string | number | null;
+    duration_minutes?: number | null;
+  } | null;
+  customer?: {
+    id: number;
+    first_name?: string | null;
+    last_name?: string | null;
+    mobile_number?: string | null;
+  } | null;
+  location?: {
+    id: number;
+    address?: string | null;
+    latitude?: string | number | null;
+    longitude?: string | number | null;
+  } | null;
+  therapist?: {
+    id: number;
+    nickname?: string | null;
+  } | null;
+}
+
+export interface AdminBookingStats {
+  total?: number;
+  active?: number;
+  completed?: number;
+  cancelled?: number;
+  requested?: number;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -512,6 +550,45 @@ export async function fetchAdminDashboardStats(token: string) {
     recent_alerts?: AdminDashboardRecentAlert[];
   }>(
     "/admin/dashboard-stats",
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminBookings(
+  token: string,
+  params?: {
+    status?: string;
+    search?: string;
+    service_type?: string;
+    page?: number;
+  },
+) {
+  const query = new URLSearchParams();
+  if (params?.status) {
+    query.set("status", params.status);
+  }
+  if (params?.search) {
+    query.set("search", params.search);
+  }
+  if (params?.service_type) {
+    query.set("service_type", params.service_type);
+  }
+  if (params?.page) {
+    query.set("page", String(params.page));
+  }
+
+  const queryString = query.toString();
+  return apiRequest<{
+    bookings: AdminBookingItem[];
+    stats?: AdminBookingStats;
+    meta?: {
+      current_page?: number;
+      last_page?: number;
+      total?: number;
+    };
+  }>(
+    `/admin/bookings${queryString ? `?${queryString}` : ""}`,
     { method: "GET" },
     token,
   );
