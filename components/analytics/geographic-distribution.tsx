@@ -4,7 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { mockGeographicData } from "@/lib/mock-data"
 
-export function GeographicDistribution() {
+interface GeographicDistributionProps {
+  data?: Array<{ area: string; bookings: number; revenue: number; percentage: number }>
+}
+
+export function GeographicDistribution({ data }: GeographicDistributionProps) {
+  const geoData = data?.length ? data : mockGeographicData
+
   return (
     <Card>
       <CardHeader>
@@ -13,7 +19,7 @@ export function GeographicDistribution() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4 font-sans">
-          {mockGeographicData.map((area) => (
+          {geoData.map((area) => (
             <div key={area.area} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{area.area}</span>

@@ -4,48 +4,68 @@ import { Users, UserPlus, RefreshCw, Percent, Calendar, DollarSign } from "lucid
 import { Card, CardContent } from "@/components/ui/card"
 import { mockClientMetrics } from "@/lib/mock-data"
 
-const metrics = [
-  {
-    title: "Total Clients",
-    value: mockClientMetrics.totalClients.toLocaleString(),
-    icon: Users,
-    description: "All registered clients",
-  },
-  {
-    title: "New This Month",
-    value: mockClientMetrics.newClientsThisMonth.toString(),
-    icon: UserPlus,
-    description: "+12% from last month",
-    highlight: true,
-  },
-  {
-    title: "Returning Clients",
-    value: mockClientMetrics.returningClients.toLocaleString(),
-    icon: RefreshCw,
-    description: "Multiple bookings",
-  },
-  {
-    title: "Retention Rate",
-    value: `${mockClientMetrics.retentionRate}%`,
-    icon: Percent,
-    description: "Client retention",
-  },
-  {
-    title: "Avg Bookings/Client",
-    value: mockClientMetrics.avgBookingsPerClient.toString(),
-    icon: Calendar,
-    description: "Per client average",
-  },
-  {
-    title: "Avg Spend/Client",
-    value: `$${mockClientMetrics.avgSpendPerClient}`,
-    icon: DollarSign,
-    description: "Lifetime value",
-    highlight: true,
-  },
-]
+interface ClientMetricsCardsProps {
+  metricsData?: {
+    total_clients: number
+    new_clients_this_month: number
+    returning_clients: number
+    retention_rate: number
+    avg_bookings_per_client: number
+    avg_spend_per_client: number
+  } | null
+}
 
-export function ClientMetricsCards() {
+export function ClientMetricsCards({ metricsData }: ClientMetricsCardsProps) {
+  const source = metricsData ?? {
+    total_clients: mockClientMetrics.totalClients,
+    new_clients_this_month: mockClientMetrics.newClientsThisMonth,
+    returning_clients: mockClientMetrics.returningClients,
+    retention_rate: mockClientMetrics.retentionRate,
+    avg_bookings_per_client: mockClientMetrics.avgBookingsPerClient,
+    avg_spend_per_client: mockClientMetrics.avgSpendPerClient,
+  }
+
+  const metrics = [
+    {
+      title: "Total Clients",
+      value: source.total_clients.toLocaleString(),
+      icon: Users,
+      description: "All registered clients",
+    },
+    {
+      title: "New This Month",
+      value: source.new_clients_this_month.toString(),
+      icon: UserPlus,
+      description: "Recently registered",
+      highlight: true,
+    },
+    {
+      title: "Returning Clients",
+      value: source.returning_clients.toLocaleString(),
+      icon: RefreshCw,
+      description: "Multiple bookings",
+    },
+    {
+      title: "Retention Rate",
+      value: `${source.retention_rate}%`,
+      icon: Percent,
+      description: "Client retention",
+    },
+    {
+      title: "Avg Bookings/Client",
+      value: source.avg_bookings_per_client.toString(),
+      icon: Calendar,
+      description: "Per client average",
+    },
+    {
+      title: "Avg Spend/Client",
+      value: `$${source.avg_spend_per_client.toLocaleString()}`,
+      icon: DollarSign,
+      description: "Lifetime value",
+      highlight: true,
+    },
+  ]
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {metrics.map((metric) => (

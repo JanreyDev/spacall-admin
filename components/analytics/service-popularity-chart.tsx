@@ -4,7 +4,13 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { mockServicePopularity } from "@/lib/mock-data"
 
-export function ServicePopularityChart() {
+interface ServicePopularityChartProps {
+  data?: Array<{ service: string; bookings: number; revenue: number }>
+}
+
+export function ServicePopularityChart({ data }: ServicePopularityChartProps) {
+  const chartData = data?.length ? data : mockServicePopularity
+
   return (
     <Card>
       <CardHeader>
@@ -14,7 +20,7 @@ export function ServicePopularityChart() {
       <CardContent>
         <div className="h-[300px] font-sans">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={mockServicePopularity} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
               <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} className="text-xs" />
               <YAxis

@@ -15,8 +15,13 @@ function getIntensityColor(value: number, max: number) {
   return "bg-sidebar-primary/20"
 }
 
-export function PeakHoursHeatmap() {
-  const maxValue = Math.max(...mockPeakHours.flatMap((d) => d.hours))
+interface PeakHoursHeatmapProps {
+  data?: Array<{ day: string; hours: number[] }>
+}
+
+export function PeakHoursHeatmap({ data }: PeakHoursHeatmapProps) {
+  const heatmapData = data?.length ? data : mockPeakHours
+  const maxValue = Math.max(1, ...heatmapData.flatMap((d) => d.hours))
 
   return (
     <Card>
@@ -36,7 +41,7 @@ export function PeakHoursHeatmap() {
             ))}
           </div>
           {/* Heatmap grid */}
-          {mockPeakHours.map((dayData) => (
+          {heatmapData.map((dayData) => (
             <div key={dayData.day} className="flex items-center gap-1">
               <div className="w-10 text-xs font-medium">{dayData.day}</div>
               {dayData.hours.slice(0, 9).map((value, i) => (

@@ -6,7 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { mockTopTherapists } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
-export function TopTherapistsTable() {
+interface TopTherapistsTableProps {
+  data?: Array<{ id: string; name: string; bookings: number; revenue: number; rating: number }>
+}
+
+export function TopTherapistsTable({ data }: TopTherapistsTableProps) {
+  const therapists = data?.length ? data : mockTopTherapists
+
   return (
     <Card>
       <CardHeader>
@@ -25,7 +31,7 @@ export function TopTherapistsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockTopTherapists.map((therapist, index) => (
+            {therapists.map((therapist, index) => (
               <TableRow key={therapist.id}>
                 <TableCell>
                   <span

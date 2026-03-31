@@ -382,6 +382,47 @@ export interface AdminMessageConversation {
   messages?: AdminMessageItem[];
 }
 
+export interface AdminReportRevenueTrend {
+  date: string;
+  revenue: number;
+  bookings: number;
+}
+
+export interface AdminReportServicePopularity {
+  service: string;
+  bookings: number;
+  revenue: number;
+}
+
+export interface AdminReportPeakHour {
+  day: string;
+  hours: number[];
+}
+
+export interface AdminReportGeographicDistribution {
+  area: string;
+  bookings: number;
+  revenue: number;
+  percentage: number;
+}
+
+export interface AdminReportTopTherapist {
+  id: string;
+  name: string;
+  bookings: number;
+  revenue: number;
+  rating: number;
+}
+
+export interface AdminReportClientMetrics {
+  total_clients: number;
+  new_clients_this_month: number;
+  returning_clients: number;
+  retention_rate: number;
+  avg_bookings_per_client: number;
+  avg_spend_per_client: number;
+}
+
 type RequestInitWithBody = RequestInit & {
   body?: unknown;
 };
@@ -741,6 +782,21 @@ export async function fetchAdminMessageConversation(
 ) {
   return apiRequest<{ conversation: AdminMessageConversation }>(
     `/admin/messages/${bookingId}`,
+    { method: "GET" },
+    token,
+  );
+}
+
+export async function fetchAdminReports(token: string) {
+  return apiRequest<{
+    revenue_trends: AdminReportRevenueTrend[];
+    service_popularity: AdminReportServicePopularity[];
+    peak_hours: AdminReportPeakHour[];
+    geographic_distribution: AdminReportGeographicDistribution[];
+    top_therapists?: AdminReportTopTherapist[];
+    client_metrics?: AdminReportClientMetrics;
+  }>(
+    "/admin/reports",
     { method: "GET" },
     token,
   );
